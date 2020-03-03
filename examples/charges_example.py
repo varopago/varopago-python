@@ -5,12 +5,12 @@ from os import path, pardir
 PROJECT_ROOT = path.dirname(path.abspath(__file__))
 sys.path.append(path.join(PROJECT_ROOT, pardir))
 
-import openpay
-openpay.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
-openpay.verify_ssl_certs = False
-openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
+import varopago
+varopago.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
+varopago.verify_ssl_certs = False
+varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
 
-customer = openpay.Customer.retrieve('amce5ycvwycfzyarjf8l')
+customer = varopago.Customer.retrieve('amce5ycvwycfzyarjf8l')
 print "customer: ", customer
 
 card = customer.cards.create(
@@ -40,7 +40,7 @@ print charge.refund()
 
 print "Creating card as merchant"
 
-card = openpay.Card.create(
+card = varopago.Card.create(
 	card_number="4111111111111111",
 	holder_name="Juan Perez",
 	expiration_year="20",
@@ -60,7 +60,7 @@ card = openpay.Card.create(
 print "Card: ", card
 
 print "Creating charge as merchant"
-charge = openpay.Charge.create_as_merchant(
+charge = varopago.Charge.create_as_merchant(
  	source_id="k2trvya1nxpcytgww4rt", 
  	method="card", amount=100, 
  	description="Fourth charge", 
@@ -68,7 +68,7 @@ charge = openpay.Charge.create_as_merchant(
 print "charge: ", charge
 
 print "Retrieve charge with ID as merchant"
-charge = openpay.Charge.retrieve_as_merchant(charge.id)
+charge = varopago.Charge.retrieve_as_merchant(charge.id)
 print "charge: ", charge
 
 print "Capturing charge"

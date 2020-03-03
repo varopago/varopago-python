@@ -14,16 +14,16 @@ import unittest
 from mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-import openpay
+import varopago
 
-from openpay.test.helper import (
-    OpenpayTestCase,
+from varopago.test.helper import (
+    VaropagoTestCase,
     NOW, DUMMY_CARD, DUMMY_CHARGE, DUMMY_PLAN,
     DUMMY_CHARGE_STORE, generate_order_id)
 
 
-class FunctionalTests(OpenpayTestCase):
-    request_client = openpay.http_client.Urllib2Client
+class FunctionalTests(VaropagoTestCase):
+    request_client = varopago.http_client.Urllib2Client
 
     def setUp(self):
         super(FunctionalTests, self).setUp()
@@ -32,7 +32,7 @@ class FunctionalTests(OpenpayTestCase):
             return self.request_client(*args, **kwargs)
 
         self.client_patcher = patch(
-            'openpay.http_client.new_default_http_client')
+            'varopago.http_client.new_default_http_client')
 
         client_mock = self.client_patcher.start()
         client_mock.side_effect = get_http_client
@@ -44,27 +44,27 @@ class FunctionalTests(OpenpayTestCase):
 
     def test_dns_failure(self):
         self.patched_api_base = patch(
-            'openpay.get_api_base',
+            'varopago.get_api_base',
             lambda: 'https://my-invalid-domain.ireallywontresolve/v1')
        # get_api_base_mock = self.patched_api_base.start()
         self.patched_api_base.start()
         try:
-            self.assertRaises(openpay.error.APIConnectionError,
-                              openpay.Customer.create)
+            self.assertRaises(varopago.error.APIConnectionError,
+                              varopago.Customer.create)
         finally:
             self.patched_api_base.stop()
 
     def test_run(self):
         DUMMY_CHARGE['order_id'] = generate_order_id()
-        charge = openpay.Charge.create(**DUMMY_CHARGE)
+        charge = varopago.Charge.create(**DUMMY_CHARGE)
         # self.assertFalse(hasattr(charge, 'refund'))
         charge.refund(merchant=True)
         self.assertTrue(hasattr(charge, 'refund'))
 
     def test_refresh(self):
         DUMMY_CHARGE['order_id'] = generate_order_id()
-        charge = openpay.Charge.create(**DUMMY_CHARGE)
-        charge2 = openpay.Charge.retrieve_as_merchant(charge.id)
+        charge = varopago.Charge.create(**DUMMY_CHARGE)
+        charge2 = varopago.Charge.retrieve_as_merchant(charge.id)
         self.assertEqual(charge2.creation_date, charge.creation_date)
 
         charge2.junk = 'junk'
@@ -72,7 +72,7 @@ class FunctionalTests(OpenpayTestCase):
         self.assertRaises(AttributeError, lambda: charge2.junk)
 
     def test_list_accessors(self):
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel Lopez", email="mlopez@example.com")
         self.assertEqual(customer['creation_date'], customer.creation_date)
         customer['foo'] = 'bar'
@@ -83,27 +83,27 @@ class FunctionalTests(OpenpayTestCase):
         expiration_year = NOW.year - 2
         EXPIRED_CARD['expiration_month'] = NOW.month
         EXPIRED_CARD['expiration_year'] = str(expiration_year)[2:]
-        self.assertRaises(openpay.error.InvalidRequestError, openpay.Charge.create,
+        self.assertRaises(varopago.error.InvalidRequestError, varopago.Charge.create,
                           amount=100, method='card', description="Test Order",
                           order_id="oid-00080", card=EXPIRED_CARD)
 
     def test_unicode(self):
         # Make sure unicode requests can be sent
-        self.assertRaises(openpay.error.InvalidRequestError,
-                          openpay.Charge.retrieve_as_merchant,
+        self.assertRaises(varopago.error.InvalidRequestError,
+                          varopago.Charge.retrieve_as_merchant,
                           id=u'☃')
 
     # def test_none_values(self):
-    #     customer = openpay.Customer.create(name=None, last_name=None)
+    #     customer = varopago.Customer.create(name=None, last_name=None)
     #     self.assertTrue(customer.id)
 
     def test_missing_id(self):
-        customer = openpay.Customer()
-        self.assertRaises(openpay.error.InvalidRequestError, customer.refresh)
+        customer = varopago.Customer()
+        self.assertRaises(varopago.error.InvalidRequestError, customer.refresh)
 
 
 class RequestsFunctionalTests(FunctionalTests):
-    request_client = openpay.http_client.RequestsClient
+    request_client = varopago.http_client.RequestsClient
 
 # Avoid skipTest errors in < 2.7
 if sys.version_info >= (2, 7):
@@ -111,7 +111,7 @@ if sys.version_info >= (2, 7):
         request_client = 'urlfetch'
 
         def setUp(self):
-            if openpay.http_client.urlfetch is None:
+            if varopago.http_client.urlfetch is None:
                 self.skipTest(
                     '`urlfetch` from Google App Engine is unavailable.')
             else:
@@ -125,25 +125,25 @@ if sys.version_info >= (2, 7):
 #         else:
 #             super(PycurlFunctionalTests, self).setUp()
 
-#     request_client = openpay.http_client.PycurlClient
+#     request_client = varopago.http_client.PycurlClient
 
 
-class AuthenticationErrorTest(OpenpayTestCase):
+class AuthenticationErrorTest(VaropagoTestCase):
 
     def test_invalid_credentials(self):
-        key = openpay.api_key
+        key = varopago.api_key
         try:
-            openpay.api_key = 'invalid'
-            openpay.Customer.create()
-        except openpay.error.AuthenticationError as e:
+            varopago.api_key = 'invalid'
+            varopago.Customer.create()
+        except varopago.error.AuthenticationError as e:
             self.assertEqual(401, e.http_status)
             self.assertTrue(isinstance(e.http_body, str))
             self.assertTrue(isinstance(e.json_body, dict))
         finally:
-            openpay.api_key = key
+            varopago.api_key = key
 
 
-class CardErrorTest(OpenpayTestCase):
+class CardErrorTest(VaropagoTestCase):
 
     def test_declined_card_props(self):
         EXPIRED_CARD = DUMMY_CARD.copy()
@@ -151,24 +151,24 @@ class CardErrorTest(OpenpayTestCase):
         EXPIRED_CARD['expiration_month'] = NOW.month
         EXPIRED_CARD['expiration_year'] = str(expiration_year)[2:]
         try:
-            openpay.Charge.create(amount=100, method='card',
+            varopago.Charge.create(amount=100, method='card',
                                   description="Test Order",
                                   order_id="oid-00080",
                                   card=EXPIRED_CARD)
-        except openpay.error.InvalidRequestError as e:
+        except varopago.error.InvalidRequestError as e:
             self.assertEqual(400, e.http_status)
             self.assertTrue(isinstance(e.http_body, str))
             self.assertTrue(isinstance(e.json_body, dict))
 
 # Note that these are in addition to the core functional charge tests
 
-class ChargeTest(OpenpayTestCase):
+class ChargeTest(VaropagoTestCase):
 
     def setUp(self):
         super(ChargeTest, self).setUp()
 
     def test_charge_list_all(self):
-        charge_list = openpay.Charge.all(
+        charge_list = varopago.Charge.all(
             creation={'lte': NOW.strftime("%Y-%m-%d")})
         list_result = charge_list.all(
             creation={'lte': NOW.strftime("%Y-%m-%d")})
@@ -181,33 +181,33 @@ class ChargeTest(OpenpayTestCase):
             self.assertEqual(expected.id, actual.id)
 
     def test_charge_list_create(self):
-        charge_list = openpay.Charge.all()
+        charge_list = varopago.Charge.all()
         DUMMY_CHARGE['order_id'] = generate_order_id()
         charge = charge_list.create(**DUMMY_CHARGE)
 
-        self.assertTrue(isinstance(charge, openpay.Charge))
+        self.assertTrue(isinstance(charge, varopago.Charge))
         self.assertEqual(DUMMY_CHARGE['amount'], charge.amount)
 
     def test_charge_list_retrieve(self):
-        charge_list = openpay.Charge.all()
+        charge_list = varopago.Charge.all()
         charge = charge_list.retrieve(charge_list.data[0].id)
-        self.assertTrue(isinstance(charge, openpay.Charge))
+        self.assertTrue(isinstance(charge, varopago.Charge))
 
     def test_charge_capture(self):
         params = DUMMY_CHARGE.copy()
         params['capture'] = False
 
-        charge = openpay.Charge.create(**params)
+        charge = varopago.Charge.create(**params)
 
         self.assertFalse(hasattr(charge, 'captured'))
 
         self.assertTrue(charge is charge.capture(merchant=True))
         self.assertEqual(
-            openpay.Charge.retrieve_as_merchant(charge.id).status,
+            varopago.Charge.retrieve_as_merchant(charge.id).status,
             'completed')
 
     def test_charge_store_as_customer(self):
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel Lopez", email="mlopez@example.com")
         charge = customer.charges.create(**DUMMY_CHARGE_STORE)
         self.assertTrue(hasattr(charge, 'payment_method'))
@@ -218,26 +218,26 @@ class ChargeTest(OpenpayTestCase):
             'in_progress')
 
     def test_charge_store_as_merchant(self):
-        charge = openpay.Charge.create(**DUMMY_CHARGE_STORE)
+        charge = varopago.Charge.create(**DUMMY_CHARGE_STORE)
 
         self.assertTrue(hasattr(charge, 'payment_method'))
         self.assertTrue(hasattr(charge.payment_method, 'reference'))
         self.assertTrue(hasattr(charge.payment_method, 'barcode_url'))
         self.assertEqual(charge.payment_method.type, "store")
-        self.assertTrue(isinstance(charge, openpay.Charge))
+        self.assertTrue(isinstance(charge, varopago.Charge))
         self.assertEqual(
-            openpay.Charge.retrieve_as_merchant(charge.id).status,
+            varopago.Charge.retrieve_as_merchant(charge.id).status,
             'in_progress')
 
 
-class CustomerTest(OpenpayTestCase):
+class CustomerTest(VaropagoTestCase):
 
     def test_list_customers(self):
-        customers = openpay.Customer.all()
+        customers = varopago.Customer.all()
         self.assertTrue(isinstance(customers.data, list))
 
     def test_list_charges(self):
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel Lopez",
             email="mlopez@example.com",
             description="foo bar")
@@ -251,7 +251,7 @@ class CustomerTest(OpenpayTestCase):
                          len(customer.charges.all().data))
 
 #    def test_unset_description(self):
-#        customer = openpay.Customer.create(
+#        customer = varopago.Customer.create(
 #            name="Miguel", last_name="Lopez",
 #            email="mlopez@example.com", description="foo bar")
 #
@@ -263,11 +263,11 @@ class CustomerTest(OpenpayTestCase):
 #            customer.retrieve(customer.id).get('description'))
 #
 #    def test_cannot_set_empty_string(self):
-#        customer = openpay.Customer()
+#        customer = varopago.Customer()
 #        self.assertRaises(ValueError, setattr, customer, "description", "")
 
     # def test_update_customer_card(self):
-    #     customer = openpay.Customer.all(limit=1).data[0]
+    #     customer = varopago.Customer.all(limit=1).data[0]
     #     card = customer.cards.create(**DUMMY_CARD)
     #     print card
     #     card.name = 'Python bindings test'
@@ -277,41 +277,41 @@ class CustomerTest(OpenpayTestCase):
     #                      customer.cards.retrieve(card.id).name)
 
 
-class CustomerPlanTest(OpenpayTestCase):
+class CustomerPlanTest(VaropagoTestCase):
 
     def setUp(self):
         super(CustomerPlanTest, self).setUp()
         try:
-            self.plan_obj = openpay.Plan.create(**DUMMY_PLAN)
-        except openpay.error.InvalidRequestError:
+            self.plan_obj = varopago.Plan.create(**DUMMY_PLAN)
+        except varopago.error.InvalidRequestError:
             self.plan_obj = None
 
     def tearDown(self):
         if self.plan_obj:
             try:
                 self.plan_obj.delete()
-            except openpay.error.InvalidRequestError:
+            except varopago.error.InvalidRequestError:
                 pass
         super(CustomerPlanTest, self).tearDown()
 
     def test_create_customer(self):
-        self.assertRaises(openpay.error.InvalidRequestError,
-                          openpay.Customer.create,
+        self.assertRaises(varopago.error.InvalidRequestError,
+                          varopago.Customer.create,
                           plan=DUMMY_PLAN['id'])
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel", last_name="Lopez", email="mlopez@example.com")
 
         subscription = customer.subscriptions.create(
             plan_id=self.plan_obj.id, trial_days="0", card=DUMMY_CARD)
 
-        self.assertTrue(isinstance(subscription, openpay.Subscription))
+        self.assertTrue(isinstance(subscription, varopago.Subscription))
         subscription.delete()
         customer.delete()
         self.assertFalse(hasattr(customer, 'subscription'))
         self.assertFalse(hasattr(customer, 'plan'))
 
     def test_update_and_cancel_subscription(self):
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel", last_name="Lopez", email="mlopez@example.com")
 
         sub = customer.subscriptions.create(
@@ -325,7 +325,7 @@ class CustomerPlanTest(OpenpayTestCase):
 
     def test_datetime_trial_end(self):
         trial_end = datetime.datetime.now() + datetime.timedelta(days=15)
-        customer = openpay.Customer.create(
+        customer = varopago.Customer.create(
             name="Miguel", last_name="Lopez", email="mlopez@example.com")
         subscription = customer.subscriptions.create(
             plan_id=self.plan_obj.id, card=DUMMY_CARD,
@@ -335,7 +335,7 @@ class CustomerPlanTest(OpenpayTestCase):
     def test_integer_trial_end(self):
         trial_end_dttm = datetime.datetime.now() + datetime.timedelta(days=15)
         trial_end_int = int(time.mktime(trial_end_dttm.timetuple()))
-        customer = openpay.Customer.create(name="Miguel",
+        customer = varopago.Customer.create(name="Miguel",
                                            last_name="Lopez",
                                            email="mlopez@example.com")
         subscription = customer.subscriptions.create(
@@ -344,35 +344,35 @@ class CustomerPlanTest(OpenpayTestCase):
         self.assertTrue(subscription.id)
 
 
-class InvalidRequestErrorTest(OpenpayTestCase):
+class InvalidRequestErrorTest(VaropagoTestCase):
 
     def test_nonexistent_object(self):
         try:
-            openpay.Charge.retrieve('invalid')
-        except openpay.error.InvalidRequestError as e:
+            varopago.Charge.retrieve('invalid')
+        except varopago.error.InvalidRequestError as e:
             self.assertEqual(404, e.http_status)
             self.assertTrue(isinstance(e.http_body, str))
             self.assertTrue(isinstance(e.json_body, dict))
 
     def test_invalid_data(self):
         try:
-            openpay.Charge.create()
-        except openpay.error.InvalidRequestError as e:
+            varopago.Charge.create()
+        except varopago.error.InvalidRequestError as e:
             self.assertEqual(400, e.http_status)
 
-class PlanTest(OpenpayTestCase):
+class PlanTest(VaropagoTestCase):
 
     def setUp(self):
         super(PlanTest, self).setUp()
         try:
-            openpay.Plan(DUMMY_PLAN['id']).delete()
-        except openpay.error.InvalidRequestError:
+            varopago.Plan(DUMMY_PLAN['id']).delete()
+        except varopago.error.InvalidRequestError:
             pass
 
     def test_create_plan(self):
-        self.assertRaises(openpay.error.InvalidRequestError,
-                          openpay.Plan.create, amount=250)
-        p = openpay.Plan.create(**DUMMY_PLAN)
+        self.assertRaises(varopago.error.InvalidRequestError,
+                          varopago.Plan.create, amount=250)
+        p = varopago.Plan.create(**DUMMY_PLAN)
         self.assertTrue(hasattr(p, 'amount'))
         self.assertTrue(hasattr(p, 'id'))
         self.assertEqual(DUMMY_PLAN['amount'], p.amount)
@@ -381,7 +381,7 @@ class PlanTest(OpenpayTestCase):
         # self.assertTrue(p.deleted)
 
     def test_update_plan(self):
-        p = openpay.Plan.create(**DUMMY_PLAN)
+        p = varopago.Plan.create(**DUMMY_PLAN)
         name = "New plan name"
         p.name = name
         p.save()
@@ -389,10 +389,10 @@ class PlanTest(OpenpayTestCase):
         p.delete()
 
     def test_update_plan_without_retrieving(self):
-        p = openpay.Plan.create(**DUMMY_PLAN)
+        p = varopago.Plan.create(**DUMMY_PLAN)
 
         name = 'updated plan name!'
-        plan = openpay.Plan(p.id)
+        plan = varopago.Plan(p.id)
         plan.name = name
 
         # should only have name and id
@@ -405,11 +405,11 @@ class PlanTest(OpenpayTestCase):
         p.delete()
 
 
-class PayoutTest(OpenpayTestCase):
+class PayoutTest(VaropagoTestCase):
 
     def setUp(self):
         super(PayoutTest, self).setUp()
-        self.customer = openpay.Customer.create(
+        self.customer = varopago.Customer.create(
             name="John", last_name="Doe", description="Test User",
             email="johndoe@example.com")
         self.bank_account = self.customer.bank_accounts.create(
@@ -447,7 +447,7 @@ class PayoutTest(OpenpayTestCase):
             order_id=generate_order_id())
 
         self.assertTrue(hasattr(payout, 'id'))
-        self.assertTrue(isinstance(payout, openpay.Payout))
+        self.assertTrue(isinstance(payout, varopago.Payout))
 
     def test_list_all_payout(self):
         payout_list = self.customer.payouts.all()
@@ -455,11 +455,11 @@ class PayoutTest(OpenpayTestCase):
         self.assertEqual(len(payout_list.data), payout_list.count)
 
 
-class CardTest(OpenpayTestCase):
+class CardTest(VaropagoTestCase):
 
     def setUp(self):
         super(CardTest, self).setUp()
-        self.customer = openpay.Customer.create(
+        self.customer = varopago.Customer.create(
             name="John", last_name="Doe", description="Test User",
             email="johndoe@example.com")
         self.card = self.customer.cards.create(
@@ -480,13 +480,13 @@ class CardTest(OpenpayTestCase):
         )
 
     def test_card_created(self):
-        self.assertTrue(isinstance(self.card, openpay.Card))
+        self.assertTrue(isinstance(self.card, varopago.Card))
 
     def test_card_list_all(self):
         card_list = self.customer.cards.all()
         self.assertEqual(card_list.count, 1)
         self.assertEqual(len(card_list.data), card_list.count)
-        self.assertTrue(isinstance(card_list, openpay.resource.ListObject))
+        self.assertTrue(isinstance(card_list, varopago.resource.ListObject))
 
     def test_card_retrieve(self):
         card_list = self.customer.cards.all()
@@ -499,11 +499,11 @@ class CardTest(OpenpayTestCase):
         self.assertEqual(list(self.card.keys()), [])
 
 
-class FeeTest(OpenpayTestCase):
+class FeeTest(VaropagoTestCase):
 
     def setUp(self):
         super(FeeTest, self).setUp()
-        self.customer = openpay.Customer.create(
+        self.customer = varopago.Customer.create(
             name="John", last_name="Doe", description="Test User",
             email="johndoe@example.com")
         self.bank_account = self.customer.bank_accounts.create(
@@ -534,24 +534,24 @@ class FeeTest(OpenpayTestCase):
             order_id=generate_order_id())
 
     def test_fee_create(self):
-        fee = openpay.Fee.create(
+        fee = varopago.Fee.create(
             customer_id=self.customer.id, amount=5,
             description="Test Fee", order_id=generate_order_id())
-        self.assertTrue(isinstance(fee, openpay.Fee))
+        self.assertTrue(isinstance(fee, varopago.Fee))
         self.assertTrue(hasattr(fee, 'id'))
 
     def test_fee_list_all(self):
-        fee_list = openpay.Fee.all()
-        self.assertTrue(isinstance(fee_list, openpay.resource.ListObject))
+        fee_list = varopago.Fee.all()
+        self.assertTrue(isinstance(fee_list, varopago.resource.ListObject))
         self.assertTrue(isinstance(fee_list.data, list))
         self.assertEqual(fee_list.count, len(fee_list.data))
 
 
-class TransferTest(OpenpayTestCase):
+class TransferTest(VaropagoTestCase):
 
     def setUp(self):
         super(TransferTest, self).setUp()
-        self.customer = openpay.Customer.create(
+        self.customer = varopago.Customer.create(
             name="John", last_name="Doe", description="Test User",
             email="johndoe@example.com")
         self.bank_account = self.customer.bank_accounts.create(
@@ -581,18 +581,18 @@ class TransferTest(OpenpayTestCase):
             amount=100, description="Test Charge",
             order_id=generate_order_id())
 
-        self.second_customer = openpay.Customer.all().data[3]
+        self.second_customer = varopago.Customer.all().data[3]
 
     def test_transfer_create(self):
         transfer = self.customer.transfers.create(
             customer_id=self.second_customer.id, amount=10,
             description="Test transfer", order_id=generate_order_id())
-        self.assertTrue(isinstance(transfer, openpay.Transfer))
+        self.assertTrue(isinstance(transfer, varopago.Transfer))
         self.assertTrue(hasattr(transfer, 'id'))
 
     def test_transfer_list_all(self):
         transfer_list = self.customer.transfers.all()
-        self.assertTrue(isinstance(transfer_list, openpay.resource.ListObject))
+        self.assertTrue(isinstance(transfer_list, varopago.resource.ListObject))
         self.assertTrue(isinstance(transfer_list.data, list))
         self.assertEqual(transfer_list.count, len(transfer_list.data))
 
@@ -603,13 +603,13 @@ class TransferTest(OpenpayTestCase):
         transfer_list = self.customer.transfers.all()
         test_transfer = transfer_list.data[0]
         transfer = self.customer.transfers.retrieve(test_transfer.id)
-        self.assertTrue(isinstance(transfer, openpay.Transfer))
+        self.assertTrue(isinstance(transfer, varopago.Transfer))
 
     def test_list_transfers(self):
-        customer = openpay.Customer.retrieve("amce5ycvwycfzyarjf8l")
+        customer = varopago.Customer.retrieve("amce5ycvwycfzyarjf8l")
         transfers = customer.transfers.all()
         self.assertTrue(isinstance(transfers.data, list))
-        self.assertTrue(isinstance(transfers.data[0], openpay.Transfer))
+        self.assertTrue(isinstance(transfers.data[0], varopago.Transfer))
 
 if __name__ == '__main__':
     unittest.main()

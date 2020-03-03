@@ -13,19 +13,19 @@ except ImportError:
 from future.builtins import super
 from future.builtins import hex
 from future.builtins import str
-import openpay
-from openpay import api, error
-from openpay.util import utf8, logger
+import varopago
+from varopago import api, error
+from varopago.util import utf8, logger
 
 
-def convert_to_openpay_object(resp, api_key, item_type=None):
+def convert_to_varopago_object(resp, api_key, item_type=None):
     types = {'charge': Charge, 'customer': Customer,
              'plan': Plan, 'transfer': Transfer, 'list': ListObject,
              'card': Card, 'payout': Payout, 'subscription': Subscription,
              'bank_account': BankAccount, 'fee': Fee}
 
     if isinstance(resp, list):
-        return [convert_to_openpay_object(i, api_key, item_type) for i in resp]
+        return [convert_to_varopago_object(i, api_key, item_type) for i in resp]
     elif isinstance(resp, dict) and not isinstance(resp, BaseObject):
         resp = resp.copy()
         klass_name = resp.get('object')
@@ -93,7 +93,7 @@ class BaseObject(dict):
                 raise KeyError(
                     "%r.  HINT: The %r attribute was set in the past."
                     "It was then wiped when refreshing the object with "
-                    "the result returned by Openpay's API, probably as a "
+                    "the result returned by varopago's API, probably as a "
                     "result of a save().  The attributes currently "
                     "available on this object are: %s" %
                     (k, k, ', '.join(list(self.keys()))))
@@ -130,7 +130,7 @@ class BaseObject(dict):
 
         for k, v in values.items():
             super(BaseObject, self).__setitem__(
-                k, convert_to_openpay_object(v, api_key))
+                k, convert_to_varopago_object(v, api_key))
 
         self._previous_metadata = values.get('metadata')
 
@@ -160,7 +160,7 @@ class BaseObject(dict):
             if 'object' not in list(response.keys()):
                 response.update({'object': self.get('item_type')})
 
-        return convert_to_openpay_object(response, api_key)
+        return convert_to_varopago_object(response, api_key)
 
     def __repr__(self):
         ident_parts = [type(self).__name__]
@@ -204,7 +204,7 @@ class APIResource(BaseObject):
 
     @classmethod
     def class_url(cls, params=None):
-        merchant_id = openpay.merchant_id
+        merchant_id = varopago.merchant_id
         cls_name = cls.class_name()
         if params and 'customer' in list(params.keys()):
             return "/v1/{0}/customers/{1}/{2}s".format(
@@ -254,7 +254,7 @@ class SingletonAPIResource(APIResource):
 
     @classmethod
     def class_url(cls):
-        merchant_id = openpay.merchant_id
+        merchant_id = varopago.merchant_id
         cls_name = cls.class_name()
         return "/v1/{0}/{1}".format(merchant_id, cls_name)
 
@@ -284,7 +284,7 @@ class ListableAPIResource(APIResource):
             'item_type': klass_name,
         }
 
-        return convert_to_openpay_object(data, api_key)
+        return convert_to_varopago_object(data, api_key)
 
 
 class CreateableAPIResource(APIResource):
@@ -299,7 +299,7 @@ class CreateableAPIResource(APIResource):
 
         response, api_key = requestor.request('post', url, params)
         klass_name = cls.__name__.lower()
-        return convert_to_openpay_object(response, api_key, klass_name)
+        return convert_to_varopago_object(response, api_key, klass_name)
 
 
 class UpdateableAPIResource(APIResource):
@@ -363,7 +363,7 @@ class Card(ListableAPIResource, UpdateableAPIResource,
 
     @classmethod
     def class_url(cls, params=None):
-        merchant_id = openpay.merchant_id
+        merchant_id = varopago.merchant_id
         cls_name = cls.class_name()
         if params and 'customer' in list(params.keys()):
             return "/v1/{0}/customers/{1}/{2}s".format(
@@ -399,7 +399,7 @@ class Charge(CreateableAPIResource, ListableAPIResource,
 
     @classmethod
     def class_url(cls, params=None):
-        merchant_id = openpay.merchant_id
+        merchant_id = varopago.merchant_id
         cls_name = cls.class_name()
         if params and 'customer' in params:
             return "/v1/{0}/customers/{1}/{2}s".format(
@@ -454,31 +454,31 @@ class Charge(CreateableAPIResource, ListableAPIResource,
         if hasattr(cls, 'api_key'):
             api_key = cls.api_key
         else:
-            api_key = openpay.api_key
+            api_key = varopago.api_key
 
         requestor = api.APIClient(api_key)
         url = cls.class_url()
         response, api_key = requestor.request('get', url, params)
-        return convert_to_openpay_object(response, api_key, 'charge')
+        return convert_to_varopago_object(response, api_key, 'charge')
 
     @classmethod
     def retrieve_as_merchant(cls, id):
         params = {}
-        api_key = getattr(cls, 'api_key', openpay.api_key)
+        api_key = getattr(cls, 'api_key', varopago.api_key)
         cls._as_merchant = True
         requestor = api.APIClient(api_key)
         uid = utf8(id)
         url = "%s/%s" % (cls.class_url(), quote_plus(uid))
         response, api_key = requestor.request('get', url, params)
-        return convert_to_openpay_object(response, api_key, 'charge')
+        return convert_to_varopago_object(response, api_key, 'charge')
 
     @classmethod
     def create_as_merchant(cls, **params):
-        api_key = getattr(cls, 'api_key', openpay.api_key)
+        api_key = getattr(cls, 'api_key', varopago.api_key)
         requestor = api.APIClient(api_key)
         # charge over merchant
         response, api_key = requestor.request('post', cls.class_url(), params)
-        return convert_to_openpay_object(response, api_key, 'charge')
+        return convert_to_varopago_object(response, api_key, 'charge')
 
 
 class Customer(CreateableAPIResource, UpdateableAPIResource,
@@ -494,7 +494,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_cards'):
-            self._cards = convert_to_openpay_object(data, self.api_key)
+            self._cards = convert_to_varopago_object(data, self.api_key)
 
         return self._cards
 
@@ -508,7 +508,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_charges'):
-            self._charges = convert_to_openpay_object(data, self.api_key)
+            self._charges = convert_to_varopago_object(data, self.api_key)
 
         return self._charges
 
@@ -522,7 +522,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_transfers'):
-            self._transfers = convert_to_openpay_object(data, self.api_key)
+            self._transfers = convert_to_varopago_object(data, self.api_key)
 
         return self._transfers
 
@@ -536,7 +536,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_payouts'):
-            self._payouts = convert_to_openpay_object(data, self.api_key)
+            self._payouts = convert_to_varopago_object(data, self.api_key)
 
         return self._payouts
 
@@ -550,7 +550,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_back_accounts'):
-            self._back_accounts = convert_to_openpay_object(data, self.api_key)
+            self._back_accounts = convert_to_varopago_object(data, self.api_key)
 
         return self._back_accounts
 
@@ -564,7 +564,7 @@ class Customer(CreateableAPIResource, UpdateableAPIResource,
         }
 
         if not hasattr(self, '_subscriptions'):
-            self._subscriptions = convert_to_openpay_object(data, self.api_key)
+            self._subscriptions = convert_to_varopago_object(data, self.api_key)
 
         return self._subscriptions
 
@@ -600,20 +600,20 @@ class Payout(CreateableAPIResource, ListableAPIResource,
 
     @classmethod
     def create_as_merchant(cls, **params):
-        api_key = getattr(cls, 'api_key', openpay.api_key)
+        api_key = getattr(cls, 'api_key', varopago.api_key)
         requestor = api.APIClient(api_key)
         response, api_key = requestor.request('post', cls.class_url(), params)
-        return convert_to_openpay_object(response, api_key, 'payout')
+        return convert_to_varopago_object(response, api_key, 'payout')
 
     @classmethod
     def retrieve_as_merchant(cls, payout_id):
         params = {}
-        api_key = getattr(cls, 'api_key', openpay.api_key)
+        api_key = getattr(cls, 'api_key', varopago.api_key)
 
         requestor = api.APIClient(api_key)
         url = "{0}/{1}".format(cls.class_url(), payout_id)
         response, api_key = requestor.request('get', url, params)
-        return convert_to_openpay_object(response, api_key, 'payout')
+        return convert_to_varopago_object(response, api_key, 'payout')
 
 class Fee(CreateableAPIResource, ListableAPIResource):
 
@@ -622,13 +622,13 @@ class Fee(CreateableAPIResource, ListableAPIResource):
         if hasattr(cls, 'api_key'):
             api_key = cls.api_key
         else:
-            api_key = openpay.api_key
+            api_key = varopago.api_key
 
         requestor = api.APIClient(api_key)
         url = cls.class_url()
         url = "{0}/{1}/refund".format(url, fee_id)
         response, api_key = requestor.request('post', url, params)
-        return convert_to_openpay_object(response, api_key, 'fee')
+        return convert_to_varopago_object(response, api_key, 'fee')
 
 
 class Subscription(DeletableAPIResource, UpdateableAPIResource):

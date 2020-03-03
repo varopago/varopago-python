@@ -4,13 +4,13 @@ from os import path, pardir
 PROJECT_ROOT = path.dirname(path.abspath(__file__))
 sys.path.append(path.join(PROJECT_ROOT, pardir))
 
-import openpay
-openpay.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
-openpay.verify_ssl_certs = False
-openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
+import varopago
+varopago.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
+varopago.verify_ssl_certs = False
+varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
 
 
-charge = openpay.Charge.create_as_merchant(
+charge = varopago.Charge.create_as_merchant(
     method="card",
     amount=100.00,
     description="Testing card charges from python",
@@ -51,6 +51,6 @@ charge = openpay.Charge.create_as_merchant(
         "data1":"value1",
         "data2":"value2"
     }
-);
+)
 
 print(charge)

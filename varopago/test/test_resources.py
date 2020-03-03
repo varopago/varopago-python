@@ -2,26 +2,26 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from future.builtins import super
 #import json
-import openpay
-#from openpay import util
+import varopago
+#from varopago import util
 
-from openpay.test.helper import (
-    OpenpayUnitTestCase, OpenpayApiTestCase,
+from varopago.test.helper import (
+    VaropagoUnitTestCase, VaropagoApiTestCase,
     MySingleton, MyListable, MyCreatable, MyUpdateable, MyDeletable,
     MyResource)
 
 
-class BaseObjectTests(OpenpayUnitTestCase):
+class BaseObjectTests(VaropagoUnitTestCase):
 
     def test_initializes_with_parameters(self):
-        obj = openpay.resource.BaseObject(
+        obj = varopago.resource.BaseObject(
             'foo', 'bar', myparam=5, yourparam='boo')
 
         self.assertEqual('foo', obj.id)
         self.assertEqual('bar', obj.api_key)
 
     def test_access(self):
-        obj = openpay.resource.BaseObject('myid', 'mykey', myparam=5)
+        obj = varopago.resource.BaseObject('myid', 'mykey', myparam=5)
 
         # Empty
         self.assertRaises(AttributeError, getattr, obj, 'myattr')
@@ -50,7 +50,7 @@ class BaseObjectTests(OpenpayUnitTestCase):
         self.assertRaises(TypeError, obj.__delitem__, 'myattr')
 
     def test_refresh_from(self):
-        obj = openpay.resource.BaseObject.construct_from({
+        obj = varopago.resource.BaseObject.construct_from({
             'foo': 'bar',
             'trans': 'me',
         }, 'mykey')
@@ -79,17 +79,17 @@ class BaseObjectTests(OpenpayUnitTestCase):
         self.assertEqual({'amount': 42}, obj._previous_metadata)
 
 #    def test_refresh_from_nested_object(self):
-#        obj = openpay.resource.BaseObject.construct_from(
+#        obj = varopago.resource.BaseObject.construct_from(
 #            SAMPLE_INVOICE, 'key')
 #
 #        self.assertEqual(1, len(obj.lines.subscriptions))
 #        self.assertTrue(
 #            isinstance(obj.lines.subscriptions[0],
-#                       openpay.resource.BaseObject))
+#                       varopago.resource.BaseObject))
 #        self.assertEqual('month', obj.lines.subscriptions[0].plan.interval)
 
 #    def test_to_json(self):
-#        obj = openpay.resource.BaseObject.construct_from(
+#        obj = varopago.resource.BaseObject.construct_from(
 #            SAMPLE_INVOICE, 'key')
 #
 #        self.check_invoice_data(json.loads(str(obj)))
@@ -109,12 +109,12 @@ class BaseObjectTests(OpenpayUnitTestCase):
                          data['lines']['subscriptions'][0]['plan']['interval'])
 
 
-class ListObjectTests(OpenpayApiTestCase):
+class ListObjectTests(VaropagoApiTestCase):
 
     def setUp(self):
         super(ListObjectTests, self).setUp()
 
-        self.lo = openpay.resource.ListObject.construct_from({
+        self.lo = varopago.resource.ListObject.construct_from({
             'id': 'me',
             'url': '/my/path',
             'item_type': 'charge'
@@ -125,7 +125,7 @@ class ListObjectTests(OpenpayApiTestCase):
         }])
 
     def assertResponse(self, res):
-        self.assertTrue(isinstance(res.data[0], openpay.Charge))
+        self.assertTrue(isinstance(res.data[0], varopago.Charge))
         self.assertEqual('bar', res.data[0].foo)
 
     def test_all(self):
@@ -153,7 +153,7 @@ class ListObjectTests(OpenpayApiTestCase):
         self.assertResponse(res)
 
 
-class APIResourceTests(OpenpayApiTestCase):
+class APIResourceTests(VaropagoApiTestCase):
 
     def test_retrieve_and_refresh(self):
         self.mock_response({
@@ -163,7 +163,7 @@ class APIResourceTests(OpenpayApiTestCase):
 
         res = MyResource.retrieve('foo*', myparam=5)
 
-        url = '/v1/{0}/myresources/foo%2A'.format(openpay.merchant_id)
+        url = '/v1/{0}/myresources/foo%2A'.format(varopago.merchant_id)
         self.requestor_mock.request.assert_called_with(
             'get', url, {'myparam': 5}
         )
@@ -178,7 +178,7 @@ class APIResourceTests(OpenpayApiTestCase):
 
         res = res.refresh()
 
-        url = '/v1/{0}/myresources/foo2'.format(openpay.merchant_id)
+        url = '/v1/{0}/myresources/foo2'.format(varopago.merchant_id)
         self.requestor_mock.request.assert_called_with(
             'get', url, {'myparam': 5}
         )
@@ -186,7 +186,7 @@ class APIResourceTests(OpenpayApiTestCase):
         self.assertEqual(5, res.frobble)
         self.assertRaises(KeyError, res.__getitem__, 'bobble')
 
-    def test_convert_to_openpay_object(self):
+    def test_convert_to_varopago_object(self):
         sample = {
             'foo': 'bar',
             'adict': {
@@ -202,13 +202,13 @@ class APIResourceTests(OpenpayApiTestCase):
             ]
         }
 
-        converted = openpay.resource.convert_to_openpay_object(sample, 'akey')
+        converted = varopago.resource.convert_to_varopago_object(sample, 'akey')
 
         # Types
-        self.assertTrue(isinstance(converted, openpay.resource.BaseObject))
-        self.assertTrue(isinstance(converted.adict, openpay.Charge))
+        self.assertTrue(isinstance(converted, varopago.resource.BaseObject))
+        self.assertTrue(isinstance(converted.adict, varopago.Charge))
         self.assertEqual(1, len(converted.alist))
-        self.assertTrue(isinstance(converted.alist[0], openpay.Customer))
+        self.assertTrue(isinstance(converted.alist[0], varopago.Customer))
 
         # Values
         self.assertEqual('bar', converted.foo)
@@ -220,21 +220,21 @@ class APIResourceTests(OpenpayApiTestCase):
         # self.assertRaises(AttributeError, getattr, converted.adict, 'object')
 
 
-class SingletonAPIResourceTests(OpenpayApiTestCase):
+class SingletonAPIResourceTests(VaropagoApiTestCase):
 
     def test_retrieve(self):
         self.mock_response({
             'single': 'ton'
         })
         res = MySingleton.retrieve()
-        url = '/v1/{0}/mysingleton'.format(openpay.merchant_id)
+        url = '/v1/{0}/mysingleton'.format(varopago.merchant_id)
         self.requestor_mock.request.assert_called_with(
             'get', url, {})
 
         self.assertEqual('ton', res.single)
 
 
-class ListableAPIResourceTests(OpenpayApiTestCase):
+class ListableAPIResourceTests(VaropagoApiTestCase):
 
     def test_all(self):
         self.mock_response([
@@ -249,18 +249,18 @@ class ListableAPIResourceTests(OpenpayApiTestCase):
         ])
 
         res = MyListable.all()
-        url = '/v1/{0}/mylistables'.format(openpay.merchant_id)
+        url = '/v1/{0}/mylistables'.format(varopago.merchant_id)
         self.requestor_mock.request.assert_called_with(
             'get', url, {})
 
         self.assertEqual(2, len(res.data))
         self.assertTrue(all(
-            isinstance(obj, openpay.Charge) for obj in res.data))
+            isinstance(obj, varopago.Charge) for obj in res.data))
         self.assertEqual('jose', res.data[0].name)
         self.assertEqual('curly', res.data[1].name)
 
 
-class CreateableAPIResourceTests(OpenpayApiTestCase):
+class CreateableAPIResourceTests(VaropagoApiTestCase):
 
     def test_create(self):
         self.mock_response({
@@ -269,15 +269,15 @@ class CreateableAPIResourceTests(OpenpayApiTestCase):
         })
 
         res = MyCreatable.create()
-        url = '/v1/{0}/mycreatables'.format(openpay.merchant_id)
+        url = '/v1/{0}/mycreatables'.format(varopago.merchant_id)
         self.requestor_mock.request.assert_called_with(
             'post', url, {})
 
-        self.assertTrue(isinstance(res, openpay.Charge))
+        self.assertTrue(isinstance(res, varopago.Charge))
         self.assertEqual('bar', res.foo)
 
 
-class UpdateableAPIResourceTests(OpenpayApiTestCase):
+class UpdateableAPIResourceTests(VaropagoApiTestCase):
 
     def setUp(self):
         super(UpdateableAPIResourceTests, self).setUp()
@@ -316,7 +316,7 @@ class UpdateableAPIResourceTests(OpenpayApiTestCase):
 
         self.requestor_mock.request.assert_called_with(
             'put',
-            '/v1/{0}/myupdateables/myid'.format(openpay.merchant_id),
+            '/v1/{0}/myupdateables/myid'.format(varopago.merchant_id),
             MyUpdateable.construct_from({
                 'id': 'myid',
                 'foo': 'bar',
@@ -345,7 +345,7 @@ class UpdateableAPIResourceTests(OpenpayApiTestCase):
 
         self.requestor_mock.request.assert_called_with(
             'put',
-            '/v1/{0}/myupdateables/myid'.format(openpay.merchant_id),
+            '/v1/{0}/myupdateables/myid'.format(varopago.merchant_id),
             MyUpdateable.construct_from({
                 'baz': 'updated',
                 'other': 'newval',
@@ -362,7 +362,7 @@ class UpdateableAPIResourceTests(OpenpayApiTestCase):
         )
 
 
-class DeletableAPIResourceTests(OpenpayApiTestCase):
+class DeletableAPIResourceTests(VaropagoApiTestCase):
 
     def test_delete(self):
         self.mock_response({

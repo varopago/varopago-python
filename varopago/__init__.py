@@ -10,22 +10,22 @@ api_version = None
 verify_ssl_certs = True
 
 # Resource
-from openpay.resource import (  # noqa
+from varopago.resource import (  # noqa
     Card, Charge, Customer, Plan, Transfer,
     Fee, BankAccount, Payout, Subscription)
 
 # Error imports.  Note that we may want to move these out of the root
 # namespace in the future and you should prefer to access them via
-# the fully qualified `openpay.error` module.
+# the fully qualified `varopago.error` module.
 
-from openpay.error import (  # noqa
-    OpenpayError, APIError, APIConnectionError, AuthenticationError, CardError,
+from varopago.error import (  # noqa
+    varopagoError, APIError, APIConnectionError, AuthenticationError, CardError,
     InvalidRequestError)
 
 
-#from openpay.resource import (
-#    convert_to_openpay_object, BaseObject, APIResource)
-#from openpay.util import logger
+#from varopago.resource import (
+#    convert_to_varopago_object, BaseObject, APIResource)
+#from varopago.util import logger
 
 import sys as _sys
 #import warnings as _warnings
@@ -44,8 +44,8 @@ _original_module = _sys.modules[__name__]
 
 def get_api_base():
     if not production:
-        api_base = str("https://sandbox-api.openpay.mx")
+        api_base = str("https://sandbox-api.varopago.mx")
     else:
-        api_base = str("https://api.openpay.mx")
+        api_base = str("https://api.varopago.mx")
 
     return api_base

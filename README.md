@@ -1,20 +1,20 @@
-![Openpay Python](http://www.openpay.mx/img/github/python.jpg)
+![Varopago Python](http://www.varopago.mx/img/github/python.jpg)
 
-Python Client for Openpay API Services
+Python Client for Varopago API Services
 
-This is a client implementing the payment services for Openpay at www.openpay.mx
+This is a client implementing the payment services for Varopago at www.varopago.mx
 
 Installation
 =============
 
-You don't need this source code unless you want to modify the package. If you just want use the Openpay
+You don't need this source code unless you want to modify the package. If you just want use the Varopago
 Python bindings, you should run:
 
-    pip install openpay
+    pip install varopago
 
 or
 
-    pip install openpay --udgrade
+    pip install varopago --udgrade
 
 See www.pip-installer.org/en/latest/index.html for instructions on installing pip.
 
@@ -26,16 +26,16 @@ Implementation
 Before use the library will be necessary to set up your Merchant ID and Private key.
 
 ```python
-import openpay
+import varopago
 
-openpay.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
-openpay.verify_ssl_certs = False
-openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
-openpay.production = True  # By default this works in sandbox mode
+varopago.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
+varopago.verify_ssl_certs = False
+varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
+varopago.production = True  # By default this works in sandbox mode
 ```
 
 #### Usage ####
-Once configured the library, you can use it to interact with Openpay API services.
+Once configured the library, you can use it to interact with Varopago API services.
 
 
 ##### Tokens #####
@@ -43,7 +43,7 @@ Once configured the library, you can use it to interact with Openpay API service
 Creating a token:
 
 ```python
-openpay.Token.create(
+varopago.Token.create(
        card_number="4111111111111111",
        holder_name="Juan Perez Ramirez",
        expiration_year="20",
@@ -65,7 +65,7 @@ openpay.Token.create(
 Creating a customer:
 
 ```python
-customer = openpay.Customer.create(
+customer = varopago.Customer.create(
     name="Juan",
     email="somebody@example.com",
     address={
@@ -83,7 +83,7 @@ customer = openpay.Customer.create(
 ```
 
 Once you have a customer, you have access to few resources for current customer. According to the current version
-of the Openpay API, these resources are:
+of the Varopago API, these resources are:
 
   - cards
   - charges
@@ -116,13 +116,13 @@ card = customer.cards.create(
 Get a customer
 
 ```python
-customer = openpay.Customer.retrieve('amce5ycvwycfzyarjf8l')
+customer = varopago.Customer.retrieve('amce5ycvwycfzyarjf8l')
 ```
 
 Update a customer
 
 ```python
-customer = openpay.Customer.retrieve('amce5ycvwycfzyarjf8l')
+customer = varopago.Customer.retrieve('amce5ycvwycfzyarjf8l')
 customer.last_name = "Lopez"
 customer.save()
 ```
@@ -130,7 +130,7 @@ customer.save()
 Get all customers
 
 ```python
-customers = openpay.Customer.all()
+customers = varopago.Customer.all()
 ```
 
 ###### Customer Cards ######
@@ -264,7 +264,7 @@ customer.payouts.retrieve("tbs6a7g4pypww4eq640d")
 Create new plan
 
 ```python
-plan = openpay.Plan.create(
+plan = varopago.Plan.create(
     amount=150.00,
     status_after_retry="cancelled",
     retry_times=2,
@@ -278,13 +278,13 @@ plan = openpay.Plan.create(
 Get specific plan
 
 ```python
-plan2 = openpay.Plan.retrieve(plan.id)
+plan2 = varopago.Plan.retrieve(plan.id)
 ```
 
 Update a plan
 
 ```python
-plan = openpay.Plan.retrieve('pbkliysxavp8bvvp8f0k')
+plan = varopago.Plan.retrieve('pbkliysxavp8bvvp8f0k')
 plan.name="Curso de Ingles II"
 plan.save()
 ```
@@ -292,7 +292,7 @@ plan.save()
 Delete plan
 
 ```python
-plan = openpay.Plan.retrieve('pbkliysxavp8bvvp8f0k')
+plan = varopago.Plan.retrieve('pbkliysxavp8bvvp8f0k')
 plan.delete()
 ```
 
@@ -301,7 +301,7 @@ plan.delete()
 You may charge a fee as follows:
 
 ```python
-fee = openpay.Fee.create(
+fee = varopago.Fee.create(
     customer_id="amce5ycvwycfzyarjf8l",
     amount=12.50,
     description="Fee Charge",
@@ -312,12 +312,12 @@ fee = openpay.Fee.create(
 List all charged fees
 
 ```python
-fees = openpay.Fee.all()
+fees = varopago.Fee.all()
 ```
 
 #### Error handling ####
 
-The Openpay API generates several types of errors depending on the situation,
+The Varopago API generates several types of errors depending on the situation,
 to handle this, the Python client has implemented four type of exceptions:
 
   - InvalidRequestError: This category includes requests when format is not JSON and Requests with non existents urls

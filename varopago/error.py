@@ -1,16 +1,16 @@
 # Exceptions
-class OpenpayError(Exception):
+class varopagoError(Exception):
 
     def __init__(self, message=None, http_body=None, http_status=None,
                  json_body=None):
-        super(OpenpayError, self).__init__(message)
+        super(varopagoError, self).__init__(message)
 
         if http_body and hasattr(http_body, 'decode'):
             try:
                 http_body = http_body.decode('utf=8')
             except:
                 http_body = ('<Could not decode body as utf-8. '
-                             'Please report to support@openpay.mx>')
+                             'Please report to support@varopago.mx>')
 
         self.http_body = http_body
 
@@ -18,15 +18,15 @@ class OpenpayError(Exception):
         self.json_body = json_body
 
 
-class APIError(OpenpayError):
+class APIError(varopagoError):
     pass
 
 
-class APIConnectionError(OpenpayError):
+class APIConnectionError(varopagoError):
     pass
 
 
-class CardError(OpenpayError):
+class CardError(varopagoError):
 
     def __init__(self, message, param, code, http_body=None,
                  http_status=None, json_body=None):
@@ -37,7 +37,7 @@ class CardError(OpenpayError):
         self.code = code
 
 
-class InvalidRequestError(OpenpayError):
+class InvalidRequestError(varopagoError):
 
     def __init__(self, message, param, http_body=None,
                  http_status=None, json_body=None):
@@ -46,5 +46,5 @@ class InvalidRequestError(OpenpayError):
         self.param = param
 
 
-class AuthenticationError(OpenpayError):
+class AuthenticationError(varopagoError):
     pass

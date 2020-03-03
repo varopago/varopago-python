@@ -5,12 +5,12 @@ from os import path, pardir
 PROJECT_ROOT = path.dirname(path.abspath(__file__))
 sys.path.append(path.join(PROJECT_ROOT, pardir))
 
-import openpay
-openpay.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
-openpay.verify_ssl_certs = False
-openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
+import varopago
+varopago.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
+varopago.verify_ssl_certs = False
+varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
 
-customer = openpay.Customer.retrieve('amce5ycvwycfzyarjf8l')
+customer = varopago.Customer.retrieve('amce5ycvwycfzyarjf8l')
 
 print "customer stored cards -------------> ", customer.cards.all().count
 
@@ -41,7 +41,7 @@ print "customer stored cards -------------> ", customer.cards.all().count
 
 
 print "Creating merchant card: "
-card = openpay.Card.create(
+card = varopago.Card.create(
 	card_number="4111111111111111",
 	holder_name="Juan Perez",
 	expiration_year="20",

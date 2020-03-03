@@ -4,12 +4,12 @@ from os import path, pardir
 PROJECT_ROOT = path.dirname(path.abspath(__file__))
 sys.path.append(path.join(PROJECT_ROOT, pardir))
 
-import openpay
-openpay.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
-openpay.verify_ssl_certs = False
-openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
+import varopago
+varopago.api_key = "sk_10d37cc4da8e4ffd902cdf62e37abd1b"
+varopago.verify_ssl_certs = False
+varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
 
-customer = openpay.Customer.retrieve('amce5ycvwycfzyarjf8l')
+customer = varopago.Customer.retrieve('amce5ycvwycfzyarjf8l')
 
 print "Listing bank accounts for {0}".format(customer.name)
 print customer.bank_accounts.all()

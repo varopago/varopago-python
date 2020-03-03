@@ -15,7 +15,7 @@ import unittest
 
 from mock import patch, Mock
 
-import openpay
+import varopago
 
 
 def generate_order_id():
@@ -68,7 +68,7 @@ DUMMY_PLAN = {
     'repeat_unit': 'month',
     'trial_days': 0,
     'repeat_every': 1,
-    'id': ('openpay-test-gold-' +
+    'id': ('varopago-test-gold-' +
            ''.join(random.choice(string.ascii_lowercase) for x in range(10)))
 }
 
@@ -80,35 +80,35 @@ DUMMY_TRANSFER = {
 }
 
 
-class OpenpayTestCase(unittest.TestCase):
+class VaropagoTestCase(unittest.TestCase):
     RESTORE_ATTRIBUTES = ('api_version', 'api_key')
 
     def setUp(self):
-        super(OpenpayTestCase, self).setUp()
+        super(VaropagoTestCase, self).setUp()
 
-        self._openpay_original_attributes = {}
+        self._varopago_original_attributes = {}
 
         for attr in self.RESTORE_ATTRIBUTES:
-            self._openpay_original_attributes[attr] = getattr(openpay, attr)
+            self._varopago_original_attributes[attr] = getattr(varopago, attr)
 
-        api_base = os.environ.get('OPENPAY_API_BASE')
+        api_base = os.environ.get('VAROPAGO_API_BASE')
         if api_base:
-            openpay.api_base = api_base
+            varopago.api_base = api_base
         #Sandbox
-        openpay.api_key = os.environ.get(
-            'OPENPAY_API_KEY', 'sk_10d37cc4da8e4ffd902cdf62e37abd1b')
-        openpay.merchant_id = "mynvbjhtzxdyfewlzmdo"
+        varopago.api_key = os.environ.get(
+            'VAROPAGO_API_KEY', 'sk_10d37cc4da8e4ffd902cdf62e37abd1b')
+        varopago.merchant_id = "mynvbjhtzxdyfewlzmdo"
         #Dev
-        #openpay.api_key = os.environ.get(
-        #    'OPENPAY_API_KEY', '68df281c16184d47bb773d70abd4191b')
-        #openpay.merchant_id = "m4se8bd4fef1mkzk6d1b"
-        openpay.verify_ssl_certs = False
+        #varopago.api_key = os.environ.get(
+        #    'VAROPAGO_API_KEY', '68df281c16184d47bb773d70abd4191b')
+        #varopago.merchant_id = "m4se8bd4fef1mkzk6d1b"
+        varopago.verify_ssl_certs = False
 
     def tearDown(self):
-        super(OpenpayTestCase, self).tearDown()
+        super(VaropagoTestCase, self).tearDown()
 
         for attr in self.RESTORE_ATTRIBUTES:
-            setattr(openpay, attr, self._openpay_original_attributes[attr])
+            setattr(varopago, attr, self._varopago_original_attributes[attr])
 
     # Python < 2.7 compatibility
     def assertRaisesRegexp(self, exception, regexp, callable, *args, **kwargs):
@@ -128,7 +128,7 @@ class OpenpayTestCase(unittest.TestCase):
                 '%s was not raised' % (exception.__name__,))
 
 
-class OpenpayUnitTestCase(OpenpayTestCase):
+class VaropagoUnitTestCase(VaropagoTestCase):
     REQUEST_LIBRARIES = ['urlfetch', 'requests', 'pycurl']
 
     if sys.version_info >= (3, 0):
@@ -137,34 +137,34 @@ class OpenpayUnitTestCase(OpenpayTestCase):
         REQUEST_LIBRARIES.append('urllib2')
 
     def setUp(self):
-        super(OpenpayUnitTestCase, self).setUp()
+        super(VaropagoUnitTestCase, self).setUp()
 
         self.request_patchers = {}
         self.request_mocks = {}
         for lib in self.REQUEST_LIBRARIES:
-            patcher = patch("openpay.http_client.%s" % (lib,))
+            patcher = patch("varopago.http_client.%s" % (lib,))
 
             self.request_mocks[lib] = patcher.start()
             self.request_patchers[lib] = patcher
 
     def tearDown(self):
-        super(OpenpayUnitTestCase, self).tearDown()
+        super(VaropagoUnitTestCase, self).tearDown()
 
         for patcher in list(self.request_patchers.values()):
             patcher.stop()
 
 
-class OpenpayApiTestCase(OpenpayTestCase):
+class VaropagoApiTestCase(VaropagoTestCase):
 
     def setUp(self):
-        super(OpenpayApiTestCase, self).setUp()
+        super(VaropagoApiTestCase, self).setUp()
 
-        self.requestor_patcher = patch('openpay.api.APIClient')
+        self.requestor_patcher = patch('varopago.api.APIClient')
         requestor_class_mock = self.requestor_patcher.start()
         self.requestor_mock = requestor_class_mock.return_value
 
     def tearDown(self):
-        super(OpenpayApiTestCase, self).tearDown()
+        super(VaropagoApiTestCase, self).tearDown()
 
         self.requestor_patcher.stop()
 
@@ -172,32 +172,32 @@ class OpenpayApiTestCase(OpenpayTestCase):
         self.requestor_mock.request = Mock(return_value=(res, 'reskey'))
 
 
-class MyResource(openpay.resource.APIResource):
+class MyResource(varopago.resource.APIResource):
     pass
 
 
-class MySingleton(openpay.resource.SingletonAPIResource):
+class MySingleton(varopago.resource.SingletonAPIResource):
     pass
 
 
-class MyListable(openpay.resource.ListableAPIResource):
+class MyListable(varopago.resource.ListableAPIResource):
     pass
 
 
-class MyCreatable(openpay.resource.CreateableAPIResource):
+class MyCreatable(varopago.resource.CreateableAPIResource):
     pass
 
 
-class MyUpdateable(openpay.resource.UpdateableAPIResource):
+class MyUpdateable(varopago.resource.UpdateableAPIResource):
     pass
 
 
-class MyDeletable(openpay.resource.DeletableAPIResource):
+class MyDeletable(varopago.resource.DeletableAPIResource):
     pass
 
 
-class MyComposite(openpay.resource.ListableAPIResource,
-                  openpay.resource.CreateableAPIResource,
-                  openpay.resource.UpdateableAPIResource,
-                  openpay.resource.DeletableAPIResource):
+class MyComposite(varopago.resource.ListableAPIResource,
+                  varopago.resource.CreateableAPIResource,
+                  varopago.resource.UpdateableAPIResource,
+                  varopago.resource.DeletableAPIResource):
     pass

@@ -7,7 +7,7 @@ import sys
 import textwrap
 import warnings
 
-from openpay import error
+from varopago import error
 
 # - Requests is the preferred HTTP library
 # - Google App Engine has urlfetch
@@ -53,7 +53,7 @@ def new_default_http_client(*args, **kwargs):
     else:
         impl = Urllib2Client
         warnings.warn(
-            "Warning: the Openpay library is falling back to urllib2/urllib "
+            "Warning: the varopago library is falling back to urllib2/urllib "
             "because neither requests nor pycurl are installed. "
             "urllib2's SSL implementation doesn't verify server "
             "certificates. For improved security, we suggest installing "
@@ -96,7 +96,7 @@ class RequestsClient(HTTPClient):
             except TypeError as e:
                 raise TypeError(
                     'Warning: It looks like your installed version of the '
-                    '"requests" library is not compatible with Openpay\'s '
+                    '"requests" library is not compatible with varopago\'s '
                     'usage thereof. (HINT: The most likely cause is that '
                     'your "requests" library is out of date. You can fix '
                     'that by running "pip install -U requests".) The '
@@ -116,15 +116,15 @@ class RequestsClient(HTTPClient):
 
     def _handle_request_error(self, e):
         if isinstance(e, requests.exceptions.RequestException):
-            msg = ("Unexpected error communicating with Openpay.  "
+            msg = ("Unexpected error communicating with varopago.  "
                    "If this problem persists, let us know at "
-                   "support@openpay.mx.")
+                   "support@varopago.mx.")
             err = "%s: %s" % (type(e).__name__, str(e))
         else:
-            msg = ("Unexpected error communicating with Openpay. "
+            msg = ("Unexpected error communicating with varopago. "
                    "It looks like there's probably a configuration "
                    "issue locally.  If this problem persists, let us "
-                   "know at support@openpay.mx.")
+                   "know at support@varopago.mx.")
             err = "A %s was raised" % (type(e).__name__,)
             if str(e):
                 err += " with error message %s" % (str(e),)
@@ -195,7 +195,7 @@ class Urllib2Client(HTTPClient):
             return rbody, rcode
 
     def _handle_request_error(self, e):
-        msg = ("Unexpected error communicating with Openpay. "
-               "If this problem persists, let us know at support@openpay.mx.")
+        msg = ("Unexpected error communicating with varopago. "
+               "If this problem persists, let us know at support@varopago.mx.")
         msg = textwrap.fill(msg) + "\n\n(Network error: " + str(e) + ")"
         raise error.APIConnectionError(msg)

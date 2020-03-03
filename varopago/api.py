@@ -5,8 +5,8 @@ import time
 import platform
 import json
 
-import openpay
-from openpay import error, http_client, version, util
+import varopago
+from varopago import error, http_client, version, util
 
 
 def _encode_datetime(dttime):
@@ -23,8 +23,8 @@ def _api_encode(data):
         key = util.utf8(key)
         if value is None:
             continue
-        elif hasattr(value, 'openpay_id'):
-            yield (key, value.openpay_id)
+        elif hasattr(value, 'varopago_id'):
+            yield (key, value.varopago_id)
         elif isinstance(value, list) or isinstance(value, tuple):
             for subvalue in value:
                 yield ("%s[]" % (key,), util.utf8(subvalue))
@@ -63,8 +63,8 @@ class APIClient(object):
     def __init__(self, key=None, client=None, test_mode=False):
         self.api_key = key
 
-        from openpay import verify_ssl_certs
-        openpay.test_mode = test_mode
+        from varopago import verify_ssl_certs
+        varopago.test_mode = test_mode
 
         self._client = client or http_client.new_default_http_client(
             verify_ssl_certs=verify_ssl_certs)
@@ -100,23 +100,23 @@ class APIClient(object):
         """
         Mechanism for issuing an API call
         """
-        from openpay import api_version
+        from varopago import api_version
 
         if self.api_key:
             my_api_key = self.api_key
         else:
-            from openpay import api_key
+            from varopago import api_key
             my_api_key = api_key
 
         if my_api_key is None:
             raise error.AuthenticationError(
                 'No API key provided. (HINT: set your API key using '
-                '"openpay.api_key = <API-KEY>"). You can generate API keys '
-                'from the Openpay Dashboard.  See http://docs.openpay.mx '
-                'for details, or email soporte@openpay.mx if you have any '
+                '"varopago.api_key = <API-KEY>"). You can generate API keys '
+                'from the varopago Dashboard.  See http://docs.varopago.mx '
+                'for details, or email soporte@varopago.mx if you have any '
                 'questions.')
 
-        abs_url = "{0}{1}".format(openpay.get_api_base(), url)
+        abs_url = "{0}{1}".format(varopago.get_api_base(), url)
 
         if method == 'get' or method == 'delete':
             if params:
@@ -127,13 +127,13 @@ class APIClient(object):
         else:
             raise error.APIConnectionError(
                 'Unrecognized HTTP method %r.  This may indicate a bug in the '
-                'Openpay bindings.  Please contact soportesu@openpay.mx for '
+                'varopago bindings.  Please contact soportesu@varopago.mx for '
                 'assistance.' % (method,))
 
         ua = {
             'bindings_version': version.VERSION,
             'lang': 'python',
-            'publisher': 'openpay',
+            'publisher': 'varopago',
             'httplib': self._client.name
         }
         for attr, func in [['lang_version', platform.python_version],
@@ -146,13 +146,13 @@ class APIClient(object):
             ua[attr] = val
 
         headers = {
-            'X-Openpay-Client-User-Agent': json.dumps(ua),
-            'User-Agent': 'Openpay/v1 PythonBindings/%s' % (version.VERSION,),
+            'X-varopago-Client-User-Agent': json.dumps(ua),
+            'User-Agent': 'varopago/v1 PythonBindings/%s' % (version.VERSION,),
             'content-type': 'application/json',
         }
 
         if api_version is not None:
-            headers['Openpay-Version'] = api_version
+            headers['varopago-Version'] = api_version
 
         rbody, rcode = self._client.request(
             method, abs_url, headers, post_data, user=my_api_key)
